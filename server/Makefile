@@ -13,11 +13,11 @@ endif
 all: $(DEP)  aesdsocket 
 
 %: %.o
-	$(CC) $(FLAG) -o $@ $(DEP) -lpthread -Wl,-Map=mapfile.map
+	$(CC) $(FLAG) -o $@ $(DEP) -pthread -Wl,-Map=mapfile.map
 
 
 %.o: %.c %.h
-	$(CC) $(FLAG) -c $< -o $@ -lpthread
+	$(CC) $(FLAG) -c $< -o $@ -pthread
 
 
 clean:
