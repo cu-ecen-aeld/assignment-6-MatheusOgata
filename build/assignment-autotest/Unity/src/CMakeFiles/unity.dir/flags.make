@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/usr/local/repository/assignments-3-and-later-MatheusOgata/assignment-autotest/Unity/src
+C_INCLUDES = -I/usr/local/repository/assignment-6-MatheusOgata/assignment-autotest/Unity/src
 
 C_FLAGS = -pthread
 

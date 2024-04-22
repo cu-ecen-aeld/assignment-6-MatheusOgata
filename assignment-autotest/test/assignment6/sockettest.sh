@@ -104,7 +104,7 @@ function test_socket_timer
 	delay_secs=$1
 	
 	new_file=`tempfile`
-	
+
 	echo ${string} | nc ${target} ${port} -w 1 > ${new_file}
 
 	cur_timestamp=$(grep -c "timestamp:" ${new_file})

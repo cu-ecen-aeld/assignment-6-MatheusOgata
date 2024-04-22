@@ -1,4 +1,4 @@
-# Install script for directory: /usr/local/repository/assignments-3-and-later-MatheusOgata/assignment-autotest
+# Install script for directory: /usr/local/repository/assignment-6-MatheusOgata/assignment-autotest
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,7 +44,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/usr/local/repository/assignments-3-and-later-MatheusOgata/build/assignment-autotest/Unity/cmake_install.cmake")
+  include("/usr/local/repository/assignment-6-MatheusOgata/build/assignment-autotest/Unity/cmake_install.cmake")
 
 endif()
 

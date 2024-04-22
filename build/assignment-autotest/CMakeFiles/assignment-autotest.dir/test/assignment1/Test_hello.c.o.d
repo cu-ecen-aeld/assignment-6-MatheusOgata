@@ -1,8 +1,8 @@
 assignment-autotest/CMakeFiles/assignment-autotest.dir/test/assignment1/Test_hello.c.o: \
- /usr/local/repository/assignments-3-and-later-MatheusOgata/assignment-autotest/test/assignment1/Test_hello.c \
+ /usr/local/repository/assignment-6-MatheusOgata/assignment-autotest/test/assignment1/Test_hello.c \
  /usr/include/stdc-predef.h \
- /usr/local/repository/assignments-3-and-later-MatheusOgata/assignment-autotest/Unity/src/unity.h \
- /usr/local/repository/assignments-3-and-later-MatheusOgata/assignment-autotest/Unity/src/unity_internals.h \
+ /usr/local/repository/assignment-6-MatheusOgata/assignment-autotest/Unity/src/unity.h \
+ /usr/local/repository/assignment-6-MatheusOgata/assignment-autotest/Unity/src/unity_internals.h \
  /usr/include/setjmp.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \

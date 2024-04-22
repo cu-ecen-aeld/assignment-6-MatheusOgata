@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /usr/local/repository/assignments-3-and-later-MatheusOgata
+CMAKE_SOURCE_DIR = /usr/local/repository/assignment-6-MatheusOgata
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /usr/local/repository/assignments-3-and-later-MatheusOgata/build
+CMAKE_BINARY_DIR = /usr/local/repository/assignment-6-MatheusOgata/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -132,14 +132,14 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(CMAKE_COMMAND) -E cmake_progress_start /usr/local/repository/assignments-3-and-later-MatheusOgata/build/CMakeFiles /usr/local/repository/assignments-3-and-later-MatheusOgata/build/assignment-autotest/Unity//CMakeFiles/progress.marks
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /usr/local/repository/assignments-3-and-later-MatheusOgata/build/CMakeFiles 0
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(CMAKE_COMMAND) -E cmake_progress_start /usr/local/repository/assignment-6-MatheusOgata/build/CMakeFiles /usr/local/repository/assignment-6-MatheusOgata/build/assignment-autotest/Unity//CMakeFiles/progress.marks
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /usr/local/repository/assignment-6-MatheusOgata/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/clean
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/clean
 .PHONY : clean
 
 # The main clean target
@@ -148,17 +148,17 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/preinstall
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/preinstall
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 assignment-autotest/Unity/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Help Target
@@ -184,6 +184,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /usr/local/repository/assignments-3-and-later-MatheusOgata/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /usr/local/repository/assignment-6-MatheusOgata/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

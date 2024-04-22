@@ -13,10 +13,12 @@
 #include <poll.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <time.h>
 #include "queue.h"
 
 //Defines
-#define PRINT_LOG
+//#define PRINT_LOG
 #define BUFFER_SIZE 100
 
 //Macros
@@ -44,8 +46,6 @@ struct client_socket_data
         socklen_t sock_length;
 };
 
-typedef struct slist_data_s slist_data_t;
-
 struct slist_data_s
 {
 	pthread_t thread;
@@ -53,13 +53,23 @@ struct slist_data_s
 	SLIST_ENTRY(slist_data_s) entries;
 };
 
+struct timer_data_s
+{
+	bool is_expired;
+	pthread_mutex_t mutex;
+};
+
+//types
+typedef struct slist_data_s slist_data_t;
+
 //funtons prototype
 static void signal_handler_function(int signal_number);
 static void* client_socket_thread_func(void* param);
 static void add_new_client(int server_fd, FILE* file, pthread_mutex_t* f_mutex);
 static void verify_disconnected_clients();
 static void remove_all_clients();
-
+static void timer_thread_func(union sigval sigval);
+static void timestamp_handler(struct timer_data_s* td, FILE* file, pthread_mutex_t* file_mutex);
 
 //main function
 int main(int argc, char* argv[])
@@ -69,12 +79,17 @@ int main(int argc, char* argv[])
 	int opt = 1;
 	int status = 0;
 	int server_fd;
+	int clock_id = CLOCK_MONOTONIC;
 	struct addrinfo hints;
 	struct addrinfo* servinfo = NULL;
 	struct sigaction s_action;
-	pthread_mutex_t file_mutex;
-	FILE* file_dir = NULL;
+	struct sigevent sev;
+	struct timer_data_s td;
 	struct pollfd poll_socket;
+	struct itimerspec t_spec;
+	pthread_mutex_t file_mutex;
+	timer_t timerid;
+	FILE* file_dir = NULL;
 
 	SLIST_INIT(&head);
 
@@ -85,6 +100,18 @@ int main(int argc, char* argv[])
 
 	memset(&s_action, 0x00, sizeof(struct sigaction));
 	s_action.sa_handler = signal_handler_function;
+
+	memset(&t_spec, 0x00, sizeof(struct itimerspec));
+	t_spec.it_value.tv_sec = 10;
+	t_spec.it_value.tv_nsec = 0;
+	t_spec.it_interval.tv_sec = 10;
+	t_spec.it_interval.tv_nsec = 0;
+
+	memset(&sev, 0x00, sizeof(struct sigevent));
+	td.is_expired = false;
+	sev.sigev_notify = SIGEV_THREAD;
+	sev.sigev_value.sival_ptr = &td;
+	sev.sigev_notify_function = timer_thread_func;
 
 	openlog(NULL, 0, LOG_USER);
 
@@ -173,10 +200,24 @@ int main(int argc, char* argv[])
 
         	if(pthread_mutex_init(&file_mutex, NULL) != 0)
         	{
-                	DEBUG_LOG("Failed to initialize mutex");
+                	DEBUG_LOG("Failed to initialize mutex\n");
                         status = -1;
                         break;			
         	}
+		
+		if(pthread_mutex_init(&td.mutex, NULL) != 0)
+		{
+			DEBUG_LOG("Filed to initialize timer mutex\n");
+			status = -1;
+			break;
+		}
+
+		if(timer_create(clock_id, &sev, &timerid) != 0)
+		{
+			DEBUG_LOG("Error while creating timer: %d (%s) \n", errno, strerror(errno));
+			status = -1;
+			break;
+		}
 
         	if(sigaction(SIGTERM, &s_action, NULL) != 0)
         	{
@@ -191,18 +232,25 @@ int main(int argc, char* argv[])
                         status = -1;
                         break;			
         	}
+
+		if(timer_settime(timerid, TIMER_ABSTIME, &t_spec, NULL) != 0)
+		{
+			DEBUG_LOG(" Error while setting timer\n");
+			status = -1;
+			break;
+		}
 	}
       	while(0);
 
 	poll_socket.fd = server_fd;
         poll_socket.events = POLLIN;
 
-
 	for(;;)
 	{
+		int poll_value = 0;
 
-		int poll_value = poll(&poll_socket, 1, 10);
-		
+		timestamp_handler(&td, file_dir, &file_mutex);
+
 		if(is_signal_active)
 		{
 			remove_all_clients();
@@ -210,10 +258,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		if(poll_value < -1)
-			continue;
-
-		switch(poll_value)
+		switch(poll_value = poll(&poll_socket, 1, 10))
 		{
 			case -1:
 		        	DEBUG_LOG("Polling has failed.\n");
@@ -225,24 +270,26 @@ int main(int argc, char* argv[])
 				break;
 
 			default:
-				add_new_client(server_fd, file_dir, &file_mutex);
+				if(poll_value > 0)
+					add_new_client(server_fd, file_dir, &file_mutex);
 				break;
-
 		}
-		
 	}
 
+	if(timer_delete(timerid) != 0)
+	{
+		perror("perror while deleting timer\n");
+	}
 
 	DEBUG_LOG("\nClosing server..\n");
 	shutdown(server_fd, SHUT_RDWR); 
 	close(server_fd);
 	fclose(file_dir);
 
-	//DEBUG_LOG("removing aesdsocketdata\n");
-	//remove(file_location);	
+	DEBUG_LOG("removing aesdsocketdata\n");
+	remove(file_location);	
 
 	return status;
-
 }
 
 static void signal_handler_function(int signal_number)
@@ -251,7 +298,78 @@ static void signal_handler_function(int signal_number)
 	is_signal_active = true;
 }
 
+static void timer_thread_func(union sigval sigval)
+{
+	pthread_mutex_t* mutex = &((struct timer_data_s *) sigval.sival_ptr)->mutex;
 
+	DEBUG_LOG("hi from timer handler interrupt\n");	
+
+	if(pthread_mutex_lock(mutex) != 0)
+        {
+                DEBUG_LOG("it was not possivel to lock mutex");
+                return;
+        }
+	
+	((struct timer_data_s *) sigval.sival_ptr)->is_expired = true;
+
+        if(pthread_mutex_unlock(mutex) != 0)
+        {
+                DEBUG_LOG("it was not possivel to lock mutex");
+                return;
+        }	
+}
+
+static void timestamp_handler(struct timer_data_s* td, FILE* file, pthread_mutex_t* file_mutex)
+{
+	time_t now;
+	struct tm* tm_info;
+	char buffer[80];
+
+	if(pthread_mutex_lock(&td->mutex) != 0)
+        {
+                DEBUG_LOG("it was not possivel to lock mutex");
+                return;
+        }
+	
+	if(td->is_expired)
+	{
+		DEBUG_LOG("Hi from timestamp hanlder flag true\n");
+		do
+		{
+			time(&now);
+			tm_info = localtime(&now);
+
+			strftime(buffer, 80, "timestamp:%a, %d %b %Y %T %z\n", tm_info);
+
+        		if(pthread_mutex_lock(file_mutex) != 0)
+        		{
+                		DEBUG_LOG("it was not possivel to lock mutex");                
+				break;
+        		}
+		
+                	if(fwrite(buffer, strlen(buffer), 1, file) == -1)
+                	{
+                		DEBUG_LOG("error fwrite\n");
+                	}
+
+                	fflush(file);
+
+                	if(pthread_mutex_unlock(file_mutex) != 0)
+                	{	
+                        	DEBUG_LOG("it was not possivel to lock mutex");
+				break;
+                	}
+		}
+		while(0);		
+		td->is_expired = false;
+	}
+
+        if(pthread_mutex_unlock(&td->mutex) != 0)
+        {
+                DEBUG_LOG("it was not possivel to lock mutex");
+                return;
+        }
+}
 
 static void add_new_client(int server_fd, FILE* file, pthread_mutex_t* f_mutex)
 {
@@ -269,8 +387,6 @@ static void add_new_client(int server_fd, FILE* file, pthread_mutex_t* f_mutex)
         	perror("accept error");
                 return;
         }
-
-	      DEBUG_LOG("Client desc: %i\n", c_socket->client_fd);
 
         memset(ipstr, 0x00, sizeof(ipstr));
         inet_ntop(AF_INET, &(((struct sockaddr_in*) &c_socket->sock_addr)->sin_addr), ipstr, sizeof(ipstr));
@@ -391,13 +507,13 @@ static void remove_all_clients()
 static void* client_socket_thread_func(void* param)
 {
 	bool is_client_disconnected = false;
+	bool is_timestamp_required = false;
 	struct client_socket_data* t_data = (struct client_socket_data*) param;
         FILE* file_dir = t_data->file_fd;
         int client_fd = t_data->client_fd;
         struct pollfd poll_socket;
         pthread_mutex_t* file_mutex = t_data->file_mutex;
 	pthread_mutex_t* client_mutex = &t_data->client_mutex;
-
         char rec_buff[BUFFER_SIZE + 1] = {'\0'};
 
         poll_socket.fd = client_fd;
@@ -475,6 +591,38 @@ static void* client_socket_thread_func(void* param)
 
                 }
                 while(1);
+
+
+                DEBUG_LOG("Sending data back..\n");
+                fseek(file_dir, 0, SEEK_SET);
+
+		is_timestamp_required = (strstr(rec_buff, "test_socket_timer") != NULL || strstr(rec_buff, "timestamp:wait-for-startup") != NULL);
+
+                do //read the content of the file and send over the socket
+                {
+			if(is_client_disconnected)
+				break;
+
+                        memset(rec_buff, '\0', sizeof(rec_buff));
+                        if(fgets(rec_buff, BUFFER_SIZE, file_dir) == NULL)
+                        {
+                                break;
+       			}
+			
+			if(!is_timestamp_required && strstr(rec_buff, "timestamp:") != NULL)
+			{
+				continue;
+			}
+
+                        if(send(client_fd, rec_buff, strlen(rec_buff), 0) == -1)
+                        {
+                                perror("perror while sending");
+                                break;
+                        }
+                }
+                while(1);
+
+                fseek(file_dir, 0, SEEK_END);
 
                 if(pthread_mutex_unlock(file_mutex) != 0)
                 {
