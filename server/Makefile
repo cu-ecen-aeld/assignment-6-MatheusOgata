@@ -1,12 +1,12 @@
 
 SRC=$(wildcard *.c)
 DEP=$(SRC:.c=.o)
-FLAGS= -g -Wall -Werror -I.
+FLAGS?= -g -Wall -Werror -I.
 
 ifeq ($(CROSS_COMPILE),)
-	CC=gcc
+	CC?=gcc
 else
-	CC=$(addprefix $(CROSS_COMPILE), gcc)
+	CC?=$(addprefix $(CROSS_COMPILE), gcc)
 endif
 
 
