@@ -159,7 +159,8 @@ int main(int argc, char* argv[])
 		{
 
 			chdir("/");
-			pid_t sid = setsid();			
+			pid_t sid = setsid();		
+			(void)sid;	
 
 			close(STDIN_FILENO);
 			close(STDOUT_FILENO);
@@ -637,5 +638,7 @@ static void* client_socket_thread_func(void* param)
 		if(is_client_disconnected)
 			break;
 	}
+
+	return param;
 }
 
